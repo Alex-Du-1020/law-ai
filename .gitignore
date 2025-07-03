@@ -2,5 +2,6 @@
 chromadb_data/
 src/__pycache__/
 .env 
-lib/**
-lib64/**
+lib/
+lib64/
+bin/
