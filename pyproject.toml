@@ -1,0 +1,8 @@
+# pyproject.toml
+[tool.poetry]
+name = "law-ai"
+version = "0.1.0"
+python = "^3.9"
+
+[tool.poetry.dependencies]
+# 您的依赖
