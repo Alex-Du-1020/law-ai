@@ -3,6 +3,9 @@ import os
 import chromadb
 from sentence_transformers import SentenceTransformer
 import requests
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+import uvicorn
 
 load_dotenv()
 API_KEY = os.getenv("DEEPSEEK_API_KEY")
@@ -57,6 +60,19 @@ def ask_deepseek(question: str, contexts: list) -> str:
     else:
         return f"Error: {response.status_code} {response.text}"
 
+app = FastAPI()
+
+@app.post("/query")
+async def query_endpoint(request: Request):
+    data = await request.json()
+    question = data.get("question")
+    if not question:
+        return JSONResponse(status_code=400, content={"error": "Missing 'question' in request body."})
+    contexts = query_db(question)
+    answer = ask_deepseek(question, contexts)
+    print("\nDeepseek Answer:")
+    return {"question": question, "contexts": contexts, "answer": answer}
+
 if __name__ == "__main__":
     # question = input("请输入您的法律问题: ")
     question = "河南省南阳市人民政府需要赔偿多少钱"
@@ -68,3 +84,4 @@ if __name__ == "__main__":
     answer = ask_deepseek(question, contexts)
     print("\nDeepseek Answer:")
     print(answer)
+    # To run the API: uvicorn src.query:app --reload

@@ -1,0 +1,21 @@
+ # Use official Python 3.12 image
+FROM python:3.12-slim
+
+# Set work directory
+WORKDIR /app
+
+# Copy requirements and install dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the code
+COPY . .
+
+# Build ChromaDB index by running embedding
+RUN python src/embedding.py
+
+# Expose FastAPI port
+EXPOSE 8000
+
+# Start FastAPI app
+CMD ["uvicorn", "src.query:app", "--host", "0.0.0.0", "--port", "8000"]
