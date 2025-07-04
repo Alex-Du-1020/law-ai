@@ -5,8 +5,9 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Copy requirements and install dependencies
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+# COPY requirements.txt ./
+# RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir chromadb sentence-transformers langchain python-dotenv requests fastapi uvicorn
 
 # Copy the rest of the code
 COPY . .
