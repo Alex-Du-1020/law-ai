@@ -1,5 +1,4 @@
 .venv/
-chromadb_data/
 src/__pycache__/
 .env 
 lib/
@@ -7,4 +6,3 @@ lib64/
 bin/
 .vscode/
 include/
-lib64/
