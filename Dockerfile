@@ -12,9 +12,6 @@ RUN pip install --no-cache-dir chromadb sentence-transformers langchain python-d
 # Copy the rest of the code
 COPY . .
 
-# Build ChromaDB index by running embedding
-RUN python src/embedding.py
-
 # Expose FastAPI port
 EXPOSE 8000
 
