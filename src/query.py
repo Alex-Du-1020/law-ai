@@ -73,6 +73,10 @@ async def query_endpoint(request: Request):
     print("\nDeepseek Answer:")
     return {"question": question, "contexts": contexts, "answer": answer}
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
 if __name__ == "__main__":
     # question = input("请输入您的法律问题: ")
     question = "河南省南阳市人民政府需要赔偿多少钱"
