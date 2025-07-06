@@ -19,11 +19,5 @@ def test_query_court():
     print("法院审理问题返回：", data.get("answer", "(2020)豫行终3143号"))
 
 if __name__ == "__main__":
-    threads = []
-    for func in [test_query_endpoint, test_query_court]:
-        t = threading.Thread(target=func)
-        t.start()
-        threads.append(t)
-    for t in threads:
-        t.join()
-    print("All threaded tests finished.")
+    # test_query_endpoint()
+    test_query_court()

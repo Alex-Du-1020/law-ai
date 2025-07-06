@@ -1,5 +1,6 @@
 .venv/
 src/__pycache__/
+__pycache__/
 .env 
 lib/
 lib64/

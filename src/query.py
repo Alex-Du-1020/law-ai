@@ -6,6 +6,7 @@ import requests
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 import uvicorn
+import logging
 
 load_dotenv()
 API_KEY = os.getenv("DEEPSEEK_API_KEY")
@@ -65,14 +66,21 @@ def ask_deepseek(question: str, contexts: list) -> str:
 
 app = FastAPI()
 
+# Configure logging
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(level=getattr(logging, log_level, logging.INFO), format='%(asctime)s %(levelname)s %(message)s')
+
 @app.post("/query")
 async def query_endpoint(request: Request):
     data = await request.json()
     question = data.get("question")
     if not question:
         return JSONResponse(status_code=400, content={"error": "Missing 'question' in request body."})
+    logging.debug(f"Received question: {question}")
     contexts = query_db(question)
+    logging.debug(f"Retrieved {len(contexts)} contexts. First context: {contexts[0][:100] if contexts else 'None'}")
     answer = ask_deepseek(question, contexts)
+    logging.debug(f"Answer: {answer[:200]}")
     print("\nDeepseek Answer:")
     return {"question": question, "contexts": contexts, "answer": answer}
 
