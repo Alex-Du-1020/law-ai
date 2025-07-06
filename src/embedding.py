@@ -1,7 +1,7 @@
 import chromadb
 from sentence_transformers import SentenceTransformer
 from typing import List
-from chunk import checkDoc
+from chunk import chunkDoc
 
 # Initialize ChromaDB persistent client and collection
 chroma_client = chromadb.PersistentClient(path="chromadb_data")
@@ -26,10 +26,10 @@ def embedding(text: str):
 
 def embed_chunks_from_chunkpy() -> List:
     """
-    Reads chunks from checkDoc in chunk.py and embeds each chunk one by one.
+    Reads chunks from chunkDoc in chunk.py and embeds each chunk one by one.
     Returns a list of embedding vectors.
     """
-    chunks = checkDoc()
+    chunks = chunkDoc()
     vectors = []
     for i, chunk in enumerate(chunks):
         vector = embedding(chunk)

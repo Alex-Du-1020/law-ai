@@ -24,23 +24,26 @@ def query_db(question: str):
     query_vector = model.encode(question).tolist()
     results = collection.query(
         query_embeddings=[query_vector],
-        n_results=5
+        n_results=10
     )
-    # Extract the top 5 related documents (contexts)
+    # Extract the top 10 related documents (contexts)
     contexts = results.get('documents', [[]])[0]
     return contexts
 
 def ask_deepseek(question: str, contexts: list) -> str:
     """
-    Sends the question and contexts to Deepseek LLM API and returns the answer.
+    Sends the question and contexts to Deepseek LLM API and returns the answer, using the prompt template.
     """
     DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"  # Example endpoint
     if not API_KEY:
         return "Error: DEEPSEEK_API_KEY not set in environment."
 
-    # Format the prompt
+    # Load prompt template
+    with open("prompt_template", "r", encoding="utf-8") as f:
+        template = f.read()
+
     context_str = "\n\n".join(contexts)
-    prompt = f"参考以下内容回答问题：\n{context_str}\n\n问题：{question}"
+    prompt = template.replace("{contexts}", context_str).replace("{query}", question)
 
     headers = {
         "Authorization": f"Bearer {API_KEY}",
@@ -79,7 +82,7 @@ def health_check():
 
 if __name__ == "__main__":
     # question = input("请输入您的法律问题: ")
-    question = "河南省南阳市人民政府需要赔偿多少钱"
+    question = "河南省高级人民法院审理的南阳某某房地产开发有限公司状告河南省南阳市人民政府征地补偿款纠纷案的判决号是多少"
     contexts = query_db(question)
     print("Top 5 related contexts:")
     for i, ctx in enumerate(contexts, 1):

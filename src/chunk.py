@@ -20,7 +20,7 @@ def readDoc(doc_folder: str = "doc") -> List[str]:
                 print(f"Error reading {filename}: {e}")
     return texts
 
-def checkDoc() -> List[str]:
+def chunkDoc() -> List[str]:
     """
     Reads documents and splits them into chunks using RecursiveCharacterTextSplitter.
     """
@@ -37,9 +37,9 @@ def checkDoc() -> List[str]:
     return all_splits
 
 def main():
-    chunks = checkDoc()
+    chunks = chunkDoc()
     print(f"Total chunks: {len(chunks)}")
-    for i, chunk in enumerate(chunks[:5]): # Print first 5 chunks for brevity
+    for i, chunk in enumerate(chunks): # Print all chunks for brevity
         print(f"--- Chunk {i+1} ---\n{chunk}\n...")
 
 if __name__ == "__main__":
