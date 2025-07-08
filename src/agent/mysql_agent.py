@@ -11,6 +11,11 @@ load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_GPT_MODEL = os.getenv("OPENAI_GPT_MODEL", "gpt-4o")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = int(os.getenv("DB_PORT", 3306))
+DB_USER = os.getenv("DB_USER", "appuser")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "example")
+DB_NAME = os.getenv("DB_NAME", "appdb")
 
 # First, we define how the LLM should understand our tools
 tools = [
@@ -60,6 +65,24 @@ tools = [
     }
 ]
 
+def get_table_schema():
+    conn = mysql.connector.connect(
+        host=DB_HOST,
+        port=DB_PORT,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME
+    )
+    schema_info = []
+    with conn.cursor() as cur:
+        cur.execute("SHOW TABLES")
+        tables = [row[0] for row in cur.fetchall()]
+        for table in tables:
+            cur.execute(f"SHOW COLUMNS FROM {table}")
+            columns = [row[0] for row in cur.fetchall()]
+            schema_info.append(f"表 {table} 字段: {', '.join(columns)}")
+    return '\n'.join(schema_info)
+
 # Now implement the actual tool functions
 def query_database(query: str) -> str:
     """
@@ -93,7 +116,7 @@ def query_database(query: str) -> str:
             # 完全匹配
             if word in table_names:
                 return word
-            # 复数转单数
+            # 复数转单数（只允许 tasks->task，不允许 task->tasks）
             if word.endswith('s') and word[:-1] in table_names:
                 return word[:-1]
             # 忽略大小写匹配
@@ -174,6 +197,38 @@ def search_wikipedia(query: str) -> str:
             "message": str(e)
         })
 
+def execute_sql(sql: str) -> str:
+    """
+    Execute an arbitrary SQL statement (for admin/debug use only).
+    Returns a JSON string with success or error message.
+    """
+    try:
+        conn = mysql.connector.connect(
+            host="localhost",
+            port=3306,
+            user="appuser",
+            password="example",
+            database="appdb"
+        )
+        with conn.cursor() as cur:
+            cur.execute(sql)
+            conn.commit()
+        return json.dumps({
+            "success": True,
+            "message": f"Executed: {sql}"
+        })
+    except mysql.connector.Error as e:
+        return json.dumps({
+            "error": f"Database error: {str(e)}"
+        })
+    except Exception as e:
+        return json.dumps({
+            "error": f"Unexpected error: {str(e)}"
+        })
+    finally:
+        if 'conn' in locals():
+            conn.close()
+
 class Agent:
     def __init__(self, system_prompt: Optional[str] = None):
         """
@@ -188,19 +243,23 @@ class Agent:
         self.messages = []
 
         # Set up system prompt if provided, otherwise use default
-        default_prompt = """You are a helpful AI assistant with access to a database
-        and Wikipedia. Follow these rules:
-        1. When asked about data, always check the database first
+        schema_info = get_table_schema()
+        print(f"\nsschema_info: {schema_info}")
+        default_prompt = f"""You are a helpful AI assistant with access to a database and Wikipedia. Follow these rules:
+        1. When asked about data, always check the database first. Database schema as followings
+        {schema_info}
         2. For general knowledge questions, use Wikipedia
         3. If you're unsure about data, query the database to verify
         4. Always mention your source of information
         5. If a tool returns an error, explain the error to the user clearly
         """
-
+        
         self.messages.append({
             "role": "system",
             "content": system_prompt or default_prompt
         })
+
+        print(f"\nself.messages: {self.messages}")
 
     def execute_tool(self, tool_call: Any) -> str:
         """
@@ -266,6 +325,9 @@ class Agent:
                     tool_choice="auto"  # Let the model decide when to use tools
                 )
                 response_message = completion.choices[0].message
+
+                print(f"\n@@@@@response_message: {response_message}")
+
                 if not response_message.tool_calls:
                     self.messages.append(response_message)
                     return response_message.content
@@ -322,4 +384,8 @@ def chat_with_agent(question: str):
 
 # Test MySQL connection
 if __name__ == "__main__":
-    chat_with_agent("How many tasks do we have in our database?")
+    # chat_with_agent("How many tasks do we have in our database?")
+    # chat_with_agent("Which task priority is the highest?")
+    chat_with_agent("List employees name and assigned task")
+    # Admin/debug: run an INSERT statement
+    # print(execute_sql("insert into TaskAssignee values(1, 10);"))
